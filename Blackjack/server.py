@@ -74,11 +74,12 @@ class BlackjackServer:
         dealer_cards = []
 
         # Helper to send a card packet
-        def send_card(rank, suit):
+        def send_card(rank, suit, result=protocol.RESULT_PLAYING):
             packet = struct.pack(
-                protocol.FORMAT_PAYLOAD_SERVER,
+                protocol.FORMAT_PAYLOAD_SERVER, # !IBBHB
                 protocol.MAGIC_COOKIE,
                 protocol.MSG_TYPE_PAYLOAD,
+                result,
                 rank,
                 suit
             )
@@ -138,30 +139,30 @@ class BlackjackServer:
                 if decision == "Hittt":
                     new_card = deck.pop()
                     player_cards.append(new_card)
-                    send_card(new_card[0], new_card[1]) #send new card
                     
                     if calc_score(player_cards) > 21: 
+                        send_card(new_card[0], new_card[1], protocol.RESULT_LOSS) #send new card with game end
                         player_bust = True
                         break
-                elif decision == "Stand": # [cite: 43]
+                    else:
+                        send_card(new_card[0], new_card[1]) #send new card normally
+                elif decision == "Stand": 
                     break
 
             except Exception as e:
                 print(f"Connection error during player turn: {e}")
                 return # Stop the round if connection dies
         
-        # 4. Dealer Turn
+        #dealer loop
         winner = protocol.RESULT_TIE
         
         if player_bust:
-            winner = protocol.RESULT_LOSS # Dealer wins [cite: 56]
-            # Even if player busts, we probably just end round, but let's reveal dealer card as courtesy?
-            # PDF says "If client busts -> dealer wins" immediately.
+            return #player already busted and got loss sent
         else:
-            # Reveal hidden card [cite: 48]
+            #send hidden dealer card now
             send_card(hidden_card[0], hidden_card[1])
             
-            # Dealer logic: Hit if < 17 
+            #delear hits until 17 or more
             while calc_score(dealer_cards) < 17:
                 new_card = deck.pop()
                 dealer_cards.append(new_card)
@@ -179,8 +180,7 @@ class BlackjackServer:
             else:
                 winner = protocol.RESULT_TIE #tie
 
-        # 5. Send Result Packet [cite: 65]
-        # We send a dummy card (0,0) with the final result status
+        #send winner result with no real card
         send_card(0, 0, winner)
 
     def start(self):
