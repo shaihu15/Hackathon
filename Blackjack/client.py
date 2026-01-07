@@ -1,0 +1,99 @@
+import socket
+import struct
+import protocol
+
+class BlackjackClient:
+    def __init__(self):
+        [cite_start]self.team_name = "Team Joker"  # Replace with your team name [cite: 104]
+        self.udp_port = protocol.UDP_PORT
+        self.buffer_size = 1024
+
+    def find_server(self):
+        """
+        Step 1: Listen for UDP broadcasts to find the server's IP and TCP port.
+        """
+        [cite_start]print("Client started, listening for offer requests...") [cite: 74]
+        
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        
+        # [cite_start]Allow multiple clients on the same machine [cite: 116]
+        try:
+            udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except AttributeError:
+            # SO_REUSEPORT might not be available on Windows; on Windows, SO_REUSEADDR usually works for this
+            udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        [cite_start]udp_socket.bind(("", self.udp_port)) [cite: 112]
+
+        while True:
+            try:
+                # Receive packet
+                data, addr = udp_socket.recvfrom(self.buffer_size)
+                server_ip = addr[0]
+
+                # Check if packet is large enough for header (39 bytes)
+                if len(data) < 39:
+                    continue
+
+                # [cite_start]Unpack: Cookie(4), Type(1), Port(2), Name(32) [cite: 84]
+                cookie, msg_type, server_port, server_name_bytes = struct.unpack(protocol.FORMAT_OFFER, data[:39])
+
+                # Validation
+                if cookie != protocol.MAGIC_COOKIE:
+                    continue
+                if msg_type != protocol.MSG_TYPE_OFFER:
+                    continue
+
+                server_name = server_name_bytes.decode('utf-8').strip('\x00') # Remove padding
+                [cite_start]print(f"Received offer from {server_name} at {server_ip}...") [cite: 75]
+
+                return server_ip, server_port
+
+            except Exception as e:
+                print(f"Error receiving UDP: {e}")
+
+    def connect_and_play(self, server_ip, server_port):
+        """
+        Step 2: Connect via TCP and send the initial request.
+        """
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        try:
+            print(f"Connecting to server at {server_ip}:{server_port}...")
+            [cite_start]tcp_socket.connect((server_ip, server_port)) [cite: 76]
+            print("Connected successfully!")
+
+            # [cite_start]Step 3: Send the Request Packet [cite: 90]
+            # Format: Cookie(4), Type(1), Rounds(1), Name(32)
+            rounds_to_play = 1  # For testing, we just ask for 1 round
+            
+            packet = struct.pack(
+                protocol.FORMAT_REQUEST,
+                protocol.MAGIC_COOKIE,
+                protocol.MSG_TYPE_REQUEST,
+                rounds_to_play,
+                protocol.pad_string(self.team_name)
+            )
+            
+            [cite_start]tcp_socket.sendall(packet) [cite: 77]
+            print(f"Sent request for {rounds_to_play} round(s). Waiting for game to start...")
+
+            # Just for this test: Try to receive one thing (or just hang here)
+            # In the real game, you'd enter a loop here to handle cards.
+            data = tcp_socket.recv(1024)
+            print(f"Server sent {len(data)} bytes back (Game loop would start here).")
+
+        except Exception as e:
+            print(f"TCP Connection Error: {e}")
+        finally:
+            print("Closing connection.")
+            [cite_start]tcp_socket.close() [cite: 81]
+
+    def start(self):
+        # Main Logic
+        server_ip, server_port = self.find_server()
+        self.connect_and_play(server_ip, server_port)
+
+if __name__ == "__main__":
+    client = BlackjackClient()
+    client.start()
