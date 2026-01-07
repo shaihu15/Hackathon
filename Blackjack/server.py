@@ -88,13 +88,19 @@ class BlackjackServer:
         
         def calc_score(cards):
             total = 0
+            aces = 0
             for r, s in cards:
-                if r == 1: #ace
+                if r == 1: #ace (11)
                     total += 11
-                elif r >= 11: #face cards
+                    aces += 1
+                elif r >= 11: #face
                     total += 10
                 else:
                     total += r
+
+            while total > 21 and aces > 0:#getting the highest score under 21 by converting aces from 11 to 1
+                total -= 10
+                aces -= 1
             return total
 
         # 2. Initial Deal [cite: 34]
