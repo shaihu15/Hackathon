@@ -7,6 +7,7 @@ class BlackjackClient:
         self.team_name = "Team Joker"
         self.udp_port = protocol.UDP_PORT
         self.buffer_size = 1024
+        self.wins = 0
 
     def get_card_name(self, rank, suit):
         suits = ["Hearts", "Diamonds", "Clubs", "Spades"]
@@ -183,6 +184,7 @@ class BlackjackClient:
     def handle_result(self, result):
         if result == protocol.RESULT_WIN:
             print(">>> YOU WON! <<<")
+            self.wins += 1
         elif result == protocol.RESULT_LOSS:
             print(">>> YOU LOST! <<<")
         elif result == protocol.RESULT_TIE:
@@ -222,6 +224,8 @@ class BlackjackClient:
 
             for i in range(rounds_num):
                 self.play_round(tcp_socket, i+1)
+            win_rate = (self.wins / rounds_num) * 100
+            print(f"Finished playing {rounds_num} rounds, win rate: {win_rate}")
 
         except Exception as e:
             print(f"TCP Connection Error: {e}")
@@ -240,6 +244,7 @@ class BlackjackClient:
 
                 # 3. Ask to play again
                 while True:
+                    self.wins = 0  #reset wins for new game
                     choice = input("\nGame session ended. Play again? (y/n): ").strip().lower()
                     if choice in ['y', 'n']:
                         break
