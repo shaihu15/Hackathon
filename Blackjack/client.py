@@ -4,19 +4,16 @@ import protocol
 
 class BlackjackClient:
     def __init__(self):
-        self.team_name = "Team Joker"  # Replace with your team name [cite: 104]
+        self.team_name = "Team Joker"
         self.udp_port = protocol.UDP_PORT
         self.buffer_size = 1024
 
     def find_server(self):
-        """
-        Step 1: Listen for UDP broadcasts to find the server's IP and TCP port.
-        """
         print("Client started, listening for offer requests...")
         
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         
-        # Allow multiple clients on the same machine [cite: 116]
+        #for reusing the port
         try:
             udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         except AttributeError:
@@ -27,24 +24,24 @@ class BlackjackClient:
 
         while True:
             try:
-                # Receive packet
+                #recieve udp offer packet
                 data, addr = udp_socket.recvfrom(self.buffer_size)
                 server_ip = addr[0]
 
-                # Check if packet is large enough for header (39 bytes)
+                #check proper len
                 if len(data) < 39:
                     continue
 
-                # Unpack: Cookie(4), Type(1), Port(2), Name(32) 
+                #unpack offer packet
                 cookie, msg_type, server_port, server_name_bytes = struct.unpack(protocol.FORMAT_OFFER, data[:39])
 
-                # Validation
+                #validate cookie and type
                 if cookie != protocol.MAGIC_COOKIE:
                     continue
                 if msg_type != protocol.MSG_TYPE_OFFER:
                     continue
 
-                server_name = server_name_bytes.decode('utf-8').strip('\x00') # Remove padding
+                server_name = server_name_bytes.decode('utf-8').strip('\x00') #remove pad
                 print(f"Received offer from {server_name} at {server_ip}...")
 
                 return server_ip, server_port
@@ -53,9 +50,6 @@ class BlackjackClient:
                 print(f"Error receiving UDP: {e}")
 
     def connect_and_play(self, server_ip, server_port):
-        """
-        Step 2: Connect via TCP and send the initial request.
-        """
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         try:
@@ -63,20 +57,23 @@ class BlackjackClient:
             tcp_socket.connect((server_ip, server_port))
             print("Connected successfully!")
 
-            # Step 3: Send the Request Packet [cite: 90]
-            # Format: Cookie(4), Type(1), Rounds(1), Name(32)
-            rounds_to_play = 1  # For testing, we just ask for 1 round
+            #get num of rounds from user. 9 is max for 1 Byte (char)
+            while True:
+                rounds_input = input("Enter number of rounds to play (1-9) and press Enter to continue: ")
+                if "1" <= rounds_input <= "9":
+                    break
+                print("Invalid input. Please enter a number between 1 and 9.")
             
             packet = struct.pack(
                 protocol.FORMAT_REQUEST,
                 protocol.MAGIC_COOKIE,
                 protocol.MSG_TYPE_REQUEST,
-                rounds_to_play,
+                rounds_input,
                 protocol.pad_string(self.team_name)
             )
             
             tcp_socket.sendall(packet) 
-            print(f"Sent request for {rounds_to_play} round(s). Waiting for game to start...")
+            print(f"Sent request for {rounds_input} round(s). Waiting for game to start...")
 
             # Just for this test: Try to receive one thing (or just hang here)
             # In the real game, you'd enter a loop here to handle cards.

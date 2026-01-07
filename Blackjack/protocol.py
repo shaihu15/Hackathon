@@ -10,8 +10,14 @@ MSG_TYPE_PAYLOAD = 0x4 #payload
 FORMAT_OFFER = '!IBH32s' 
 #request: big endian,Cookie(4), Type(1), Rounds(1), Name(32)
 FORMAT_REQUEST = '!IBB32s'
-#payload: big endian,Cookie(4), Type(1), ...
-FORMAT_PAYLOAD_HEADER = '!IB' 
+FORMAT_PAYLOAD_CLIENT = '!IB5s'
+FORMAT_PAYLOAD_SERVER = '!IBBHB'
+
+#game results
+RESULT_PLAYING = 0x0
+RESULT_TIE = 0x1
+RESULT_LOSS = 0x2
+RESULT_WIN = 0x3
 
 def pad_string(text, length=32):
     return text.encode('utf-8')[:length].ljust(length, b'\x00')
