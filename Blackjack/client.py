@@ -4,7 +4,7 @@ import protocol
 
 class BlackjackClient:
     def __init__(self):
-        [cite_start]self.team_name = "Team Joker"  # Replace with your team name [cite: 104]
+        self.team_name = "Team Joker"  # Replace with your team name [cite: 104]
         self.udp_port = protocol.UDP_PORT
         self.buffer_size = 1024
 
@@ -12,18 +12,18 @@ class BlackjackClient:
         """
         Step 1: Listen for UDP broadcasts to find the server's IP and TCP port.
         """
-        [cite_start]print("Client started, listening for offer requests...") [cite: 74]
+        print("Client started, listening for offer requests...")
         
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         
-        # [cite_start]Allow multiple clients on the same machine [cite: 116]
+        # Allow multiple clients on the same machine [cite: 116]
         try:
             udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         except AttributeError:
             # SO_REUSEPORT might not be available on Windows; on Windows, SO_REUSEADDR usually works for this
             udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        [cite_start]udp_socket.bind(("", self.udp_port)) [cite: 112]
+        udp_socket.bind(("", self.udp_port))
 
         while True:
             try:
@@ -35,7 +35,7 @@ class BlackjackClient:
                 if len(data) < 39:
                     continue
 
-                # [cite_start]Unpack: Cookie(4), Type(1), Port(2), Name(32) [cite: 84]
+                # Unpack: Cookie(4), Type(1), Port(2), Name(32) 
                 cookie, msg_type, server_port, server_name_bytes = struct.unpack(protocol.FORMAT_OFFER, data[:39])
 
                 # Validation
@@ -45,7 +45,7 @@ class BlackjackClient:
                     continue
 
                 server_name = server_name_bytes.decode('utf-8').strip('\x00') # Remove padding
-                [cite_start]print(f"Received offer from {server_name} at {server_ip}...") [cite: 75]
+                print(f"Received offer from {server_name} at {server_ip}...")
 
                 return server_ip, server_port
 
@@ -60,10 +60,10 @@ class BlackjackClient:
         
         try:
             print(f"Connecting to server at {server_ip}:{server_port}...")
-            [cite_start]tcp_socket.connect((server_ip, server_port)) [cite: 76]
+            tcp_socket.connect((server_ip, server_port))
             print("Connected successfully!")
 
-            # [cite_start]Step 3: Send the Request Packet [cite: 90]
+            # Step 3: Send the Request Packet [cite: 90]
             # Format: Cookie(4), Type(1), Rounds(1), Name(32)
             rounds_to_play = 1  # For testing, we just ask for 1 round
             
@@ -75,7 +75,7 @@ class BlackjackClient:
                 protocol.pad_string(self.team_name)
             )
             
-            [cite_start]tcp_socket.sendall(packet) [cite: 77]
+            tcp_socket.sendall(packet) 
             print(f"Sent request for {rounds_to_play} round(s). Waiting for game to start...")
 
             # Just for this test: Try to receive one thing (or just hang here)
@@ -87,7 +87,7 @@ class BlackjackClient:
             print(f"TCP Connection Error: {e}")
         finally:
             print("Closing connection.")
-            [cite_start]tcp_socket.close() [cite: 81]
+            tcp_socket.close()
 
     def start(self):
         # Main Logic
