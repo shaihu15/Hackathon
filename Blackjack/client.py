@@ -57,11 +57,15 @@ class BlackjackClient:
             tcp_socket.connect((server_ip, server_port))
             print("Connected successfully!")
 
-            #get num of rounds from user. 9 is max for 1 Byte (char)
+            #get num of rounds from user. 255 is max for 1 Byte 
             while True:
-                rounds_input = input("Enter number of rounds to play (1-9) and press Enter to continue: ")
-                if "1" <= rounds_input <= "9":
-                    break
+                rounds_input = input("Enter number of rounds to play (1-255) and press Enter to continue: ")
+                try:
+                    rounds_num = int(rounds_input)
+                    if 1 <= rounds_num <= 255:
+                        break
+                except ValueError:
+                    continue
                 print("Invalid input. Please enter a number between 1 and 9.")
             
             packet = struct.pack(
