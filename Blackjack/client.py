@@ -183,13 +183,10 @@ class BlackjackClient:
     def handle_result(self, result):
         if result == protocol.RESULT_WIN:
             print(">>> YOU WON! <<<")
-            self.wins += 1
         elif result == protocol.RESULT_LOSS:
             print(">>> YOU LOST! <<<")
-            self.losses += 1
         elif result == protocol.RESULT_TIE:
             print(">>> IT'S A TIE! <<<")
-            self.ties += 1
         else:
             print(f"Unknown result code: {result}")
 
