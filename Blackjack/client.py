@@ -230,9 +230,32 @@ class BlackjackClient:
             tcp_socket.close()
 
     def start(self):
-        # Main Logic
-        server_ip, server_port = self.find_server()
-        self.connect_and_play(server_ip, server_port)
+        while True:
+            try:
+                # 1. Listen for UDP offer
+                server_ip, server_port = self.find_server()
+                
+                # 2. Connect and play the game
+                self.connect_and_play(server_ip, server_port)
+
+                # 3. Ask to play again
+                while True:
+                    choice = input("\nGame session ended. Play again? (y/n): ").strip().lower()
+                    if choice in ['y', 'n']:
+                        break
+                
+                if choice == 'n':
+                    print("Exiting game. Goodbye!")
+                    break
+                else:
+                    print("\nRestarting... listening for server offer.")
+            
+            except KeyboardInterrupt:
+                print("\n\nClient interrupted by user (Ctrl+C). Exiting...")
+                break
+            except Exception as e:
+                print(f"\nUnexpected error occurred: {e}")
+                print("Retrying...")
 
 if __name__ == "__main__":
     client = BlackjackClient()
