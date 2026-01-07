@@ -68,7 +68,7 @@ class BlackjackClient:
                 protocol.FORMAT_REQUEST,
                 protocol.MAGIC_COOKIE,
                 protocol.MSG_TYPE_REQUEST,
-                rounds_input,
+                int(rounds_input),
                 protocol.pad_string(self.team_name)
             )
             
