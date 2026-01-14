@@ -60,7 +60,7 @@ class BlackjackServer:
                 print("Invalid protocol message")
                 return
             
-            client_name = team_name_bytes.decode('utf-8').strip()
+            client_name = team_name_bytes.decode('utf-8').strip('\x00')
             print(f"Player {client_name} requested {rounds} rounds.")
 
             #Game Loop
