@@ -81,7 +81,7 @@ class BlackjackServer:
         player_cards = []
         dealer_cards = []
 
-        # Helper to send a card packet
+        #send card packet
         def send_card(rank, suit, result=protocol.RESULT_PLAYING):
             packet = struct.pack(
                 protocol.FORMAT_PAYLOAD_SERVER, # !IBBHB
@@ -111,32 +111,31 @@ class BlackjackServer:
                 aces -= 1
             return total
 
-        # 2. Initial Deal [cite: 34]
-        # Player Card 1
+        #start dealing card
+        #card 1 
         c = deck.pop()
         player_cards.append(c)
         send_card(c[0], c[1])
 
-        # Player Card 2
+        #card 2
         c = deck.pop()
         player_cards.append(c)
         send_card(c[0], c[1])
 
-        # Dealer Card 1 (Visible)
+        #dealer card (visible)
         c = deck.pop()
         dealer_cards.append(c)
         send_card(c[0], c[1])
 
-        # Dealer Card 2 (Hidden) [cite: 39]
+        #dealer card (hidden)
         hidden_card = deck.pop()
         dealer_cards.append(hidden_card)
         # We do NOT send this yet.
 
-        # 3. Player Turn
+        #player turn
         player_bust = False
         while True:
-            # Receive decision
-            try:
+            try: #getting action packet
                 data = conn.recv(1024)
                 if len(data) < 10: continue 
                 cookie, msg_type, decision_bytes = struct.unpack(protocol.FORMAT_PAYLOAD_CLIENT, data[:10])
