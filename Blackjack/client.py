@@ -4,7 +4,7 @@ import protocol
 
 class BlackjackClient:
     def __init__(self):
-        self.team_name = "Team Joker"
+        self.team_name = "Team Dealer Crushers"
         self.udp_port = protocol.UDP_PORT
         self.buffer_size = 1024
         self.wins = 0
@@ -37,7 +37,7 @@ class BlackjackClient:
             try:
                 chunk = sock.recv(length - len(data)) #receive remaining bytes
                 if not chunk: 
-                    raise ConnectionError("Connection closed by server")#if no data received
+                    raise ConnectionError("Connection closed by server")#if no data received or connection closed
                 data += chunk
             except socket.error as e:
                 raise ConnectionError(f"Socket error: {e}") #handle socket errors
@@ -103,36 +103,34 @@ class BlackjackClient:
         
         player_cards = []
         dealer_cards = []
-        # Player Card 1
+        #First card
         res, rank, suit = self.parse_server_packet(tcp_socket)
         c1 = self.get_card_name(rank, suit)
         player_cards.append(c1)
         print(f"Player got: {c1}")
 
-        # Player Card 2
+        #Second Card
         res, rank, suit = self.parse_server_packet(tcp_socket)
         c2 = self.get_card_name(rank, suit)
         player_cards.append(c2)
         print(f"Player got: {c2}")
 
-        # Dealer Card 1 (Visible)
+        #the visible dealer card
         res, rank, suit = self.parse_server_packet(tcp_socket)
         d1 = self.get_card_name(rank, suit)
         dealer_cards.append(d1)
         print(f"Dealer showing: {d1}")
         
-        # --- 2. Player Turn ---
+        # ****PLAYER TURNN****
         while True:
-            # Ask user for move
             action = ""
-            while action not in ["h", "s"]:
+            while action not in ["h", "s"]: #validate user input is action
                 user_input = input("Your move (h)it or (s)tand? ").strip().lower()
                 if user_input in ["h", "s"]:
                     action = user_input
             
             if action == 'h':
-                # Send Hit
-                # Protocol requires "Hittt" (5 bytes) 
+                #send Hit
                 payload = struct.pack(
                     protocol.FORMAT_PAYLOAD_CLIENT,
                     protocol.MAGIC_COOKIE,
@@ -141,19 +139,18 @@ class BlackjackClient:
                 )
                 tcp_socket.sendall(payload)
                 
-                # Receive response card
+                #server response to the action
                 res, rank, suit = self.parse_server_packet(tcp_socket)
                 card_name = self.get_card_name(rank, suit)
                 print(f"Player got: {card_name}")
                 
                 if res != protocol.RESULT_PLAYING:
-                    # If result is not playing, it means we busted or won immediately? 
-                    # Usually means bust if we just hit.
+                    #if result is not playing => player lost
                     self.handle_result(res)
-                    return # Round over
+                    return #round over
                     
             elif action == 's':
-                # Send Stand
+                #send stand
                 payload = struct.pack(
                     protocol.FORMAT_PAYLOAD_CLIENT,
                     protocol.MAGIC_COOKIE,
@@ -161,18 +158,16 @@ class BlackjackClient:
                     b"Stand"
                 )
                 tcp_socket.sendall(payload)
-                break # Exit player loop, wait for dealer
+                break #exit player action loop - dealer's turn
 
-        # --- 3. Dealer Turn ---
-        # We now listen until the server sends a result that isn't PLAYING.
-        # The server will send the hidden card, then any draw cards, then the final result.
+        # ****dealer turn****
+        #listening to the server until the dealer's turn ends
         
         print("Dealer's turn...")
         while True:
             res, rank, suit = self.parse_server_packet(tcp_socket)
             
-            # If rank is 0, it's likely just a status packet (Game Over), 
-            # though the protocol definition technically has a card for every packet.
+            #rank = 0 => game ended packet
             if rank != 0:
                 card_name = self.get_card_name(rank, suit)
                 print(f"Dealer got: {card_name}")
@@ -236,13 +231,13 @@ class BlackjackClient:
     def start(self):
         while True:
             try:
-                # 1. Listen for UDP offer
+                #listen for server's udp broadcast
                 server_ip, server_port = self.find_server()
                 
-                # 2. Connect and play the game
+                #connect to the server with tcp and play
                 self.connect_and_play(server_ip, server_port)
 
-                # 3. Ask to play again
+                #when all rounds are over the user can choose to reconnect
                 while True:
                     self.wins = 0  #reset wins for new game
                     choice = input("\nGame session ended. Play again? (y/n): ").strip().lower()

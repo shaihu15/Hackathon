@@ -15,6 +15,14 @@ class BlackjackServer:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         
+        #get my actual local IP instead of letting Windows choose randomly(which might pick WSL)
+        my_ip = self.get_local_ip()
+        try:
+            #bind the socket to the specific local IP and port 0 for assign a random free port automatically
+            udp_socket.bind((my_ip, 0))
+        except Exception as e:
+            print(f"Warning: Could not bind to specific IP {my_ip}: {e}")
+
         #creating the offer packet
         packet = struct.pack(
             protocol.FORMAT_OFFER,
