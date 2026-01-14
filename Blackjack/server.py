@@ -7,7 +7,7 @@ import protocol
 
 class BlackjackServer:
     def __init__(self):
-        self.team_name = "Team "  
+        self.team_name = "Team Packet Dealers"  
         self.tcp_port = 0  #0 is for random free port - changes later after os gives us one
         self.running = True
 
